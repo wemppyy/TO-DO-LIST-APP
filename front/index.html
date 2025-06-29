@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <title>Задачі</title>
+    <link rel="stylesheet" href="main.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="add-item" style="display: none;" id="addItem">
+        <div class="add-item-content">
+            <button class="close-window-btn" id="closeWindowBtn">✖</button>
+            <h2>Додати задачу</h2>
+            <div class="add-item-form" id="addItemForm">
+                <label for="task-name">Назва:</label>
+                <input type="text" id="task-name" name="task-name" required>
+
+                <label for="task-description">Опис:</label>
+                <textarea id="task-description" name="task-description" required></textarea>
+
+                <label for="task-date">Дата:</label>
+                <input type="datetime-local" id="task-date" name="task-date" required>
+
+                <button type="submit" id="submitButton">Додати</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <h1 class="name">AI ToDo</h1>
+    </header>
+
+
+    <div class="search-bar">
+        <button>🎤</button>
+        <input id="textToAI" type="text" placeholder="ai...">
+        <button id="sendToAIBtn">▶</button>
+    </div>
+
+
+    <main class="tasks" id="todoList">
+    </main>
+
+    <div class="add-button" id="addButton">+</div>
+
+    <div class="authors">
+        @r1xez @wemppyy 
+    </div>
+
+</body>
+<script src="script.js"></script>
+</html>
