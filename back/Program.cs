@@ -1,12 +1,20 @@
-
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var allowedOrigin = "http://127.0.0.1:5500";
+// Завантаження конфігурації
+var configuration = builder.Configuration;
+var allowedOrigin = configuration.GetSection("CorsSettings:AllowedOrigin").Value;
 
+if (string.IsNullOrEmpty(allowedOrigin))
+{
+    throw new InvalidOperationException("AllowedOrigin is not configured in appsettings.json");
+}
+
+// Додавання сервісів до контейнера.
 builder.Services.AddControllers();
 builder.Services.AddCors(options =>
 {

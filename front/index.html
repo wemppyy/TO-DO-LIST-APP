@@ -9,6 +9,16 @@
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
 </head>
 <body>
+    <div class="record" id="record">
+        <div class="record-content">
+            <button class="close-window-btn" id="closeRecordBtn">✖</button>
+            <h2>Запис</h2>
+            <button class="record-btn" id="recordBtn">
+                🎤
+            </button>
+        </div>
+    </div>
+
     <div class="add-item" style="display: none;" id="addItem">
         <div class="add-item-content">
             <button class="close-window-btn" id="closeWindowBtn">✖</button>
@@ -34,7 +44,7 @@
 
 
     <div class="search-bar">
-        <button>🎤</button>
+        <button id="searchBarBtn">🎤</button>
         <input id="textToAI" type="text" placeholder="ai...">
         <button id="sendToAIBtn">▶</button>
     </div>

@@ -1,24 +1,65 @@
+// Утиліта для скороченого доступу до елементів за ID
 const $ = id => document.getElementById(id);
 
+// Базовий URL для API
 const API = "http://localhost:5800/todo";
+// Час анімації в мс, має відповідати CSS
+const ANIMATION_TIME = 500;
 
+/**
+ * Універсальна функція для показу/приховування модальних вікон з анімацією.
+ * @param {string} modalId - ID модального вікна.
+ * @param {boolean} show - true, щоб показати, false, щоб приховати.
+ */
+function toggleModal(modalId, show) {
+    const modal = $(modalId);
+    if (!modal) return;
 
-// Анімація появи та приховування .add-item
-$("addButton").onclick = () => {
-    const addItem = $("addItem");
-    addItem.style.display = 'block';
-    // Тригеримо анімацію через клас
-    setTimeout(() => addItem.classList.add('active'), 10);
-};
+    if (show) {
+        modal.style.display = 'block';
+        // Невеликий таймаут, щоб CSS встиг застосувати display: block перед анімацією
+        setTimeout(() => modal.classList.add('active'), 10);
+    } else {
+        modal.classList.remove('active');
+        // Чекаємо завершення анімації, перш ніж приховати елемент
+        setTimeout(() => {
+            modal.style.display = 'none';
+        }, ANIMATION_TIME);
+    }
+}
 
-$("closeWindowBtn").onclick = () => {
-    const addItem = $("addItem");
-    addItem.classList.remove('active');
-    // Чекаємо завершення анімації, потім приховуємо
-    setTimeout(() => {
-        addItem.style.display = 'none';
-    }, 500);
-};
+/**
+ * Відправляє текст до AI для обробки та оновлює список задач.
+ * @param {string} text - Текст для відправки.
+ */
+async function sendToAI(text) {
+    const btn = $("sendToAIBtn");
+    const oldContent = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '🔄';
+
+    try {
+        const res = await fetch(`${API}/ai-process`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(text)
+        });
+        if (!res.ok) throw new Error('Помилка під час обробки AI');
+        await res.json(); // Очікуємо відповідь, навіть якщо вона порожня
+        loadTodoList(); // Оновлюємо список
+    } catch (err) {
+        alert(err.message);
+    } finally {
+        btn.innerHTML = oldContent;
+        btn.disabled = false;
+    }
+}
+
+// Обробники подій для кнопок відкриття/закриття модальних вікон
+$("addButton").onclick = () => toggleModal("addItem", true);
+$("closeWindowBtn").onclick = () => toggleModal("addItem", false);
+$("searchBarBtn").onclick = () => toggleModal("record", true);
+$("closeRecordBtn").onclick = () => toggleModal("record", false);
 
 /* При завантаженні сторінки викликається loadTodoList */
 window.addEventListener('DOMContentLoaded', loadTodoList);
@@ -26,63 +67,63 @@ window.addEventListener('DOMContentLoaded', loadTodoList);
 // Обробка відправки форми додавання задачі
 $("submitButton").onclick = async e => {
     e.preventDefault();
-    // Отримуємо значення з полів форми
     const title = $("task-name").value.trim();
     const description = $("task-description").value.trim();
     const completeTime = $("task-date").value;
+
+    if (!title) {
+        alert('Будь ласка, введіть назву задачі.');
+        return;
+    }
+
     try {
-        // Відправляємо POST-запит на сервер для додавання задачі
         const res = await fetch(API, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ title, description, isCompleted: false, completeTime })
         });
         if (!res.ok) throw new Error(await res.text());
+        
         // Очищаємо форму і закриваємо вікно
         $("task-name").value = '';
         $("task-description").value = '';
         $("task-date").value = '';
-        $("addItem").style.display = 'none';
-        // Оновлюємо список задач
-        loadTodoList();
+        toggleModal("addItem", false);
+        
+        loadTodoList(); // Оновлюємо список задач
     } catch (err) {
         alert('Помилка при додаванні задачі: ' + err.message);
     }
 };
-
 
 // Делегування подій для кнопок видалення задач
 $("todoList").onclick = function(e) {
     if (e.target.classList.contains('close-btn')) {
         const taskDiv = e.target.closest('.task');
         const id = taskDiv.getAttribute('data-id');
-        console.log(`Видалення задачі з ID: ${id}`);
-        
         if (id) deleteTodoItem(id);
     }
 };
-
-window.addEventListener('DOMContentLoaded', loadTodoList);
 
 // Отримання списку задач з сервера і відображення їх на сторінці
 async function loadTodoList() {
     try {
         const res = await fetch(API);
+        if (!res.ok) throw new Error('Не вдалося завантажити задачі');
         const data = await res.json();
         renderTodoList(data);
     } catch (err) {
         console.error("ПОМИЛКА:", err);
+        alert(err.message);
     }
 }
-
 
 // Форматування дати для гарного відображення
 function formatDate(dateStr) {
     if (!dateStr) return '';
-    // Перетворюємо рядок у Date
     const d = new Date(dateStr);
-    if (isNaN(d)) return dateStr;
-    // Отримуємо YYYY-MM-DD HH:mm
+    if (isNaN(d.getTime())) return dateStr; // Перевірка на валідність дати
+    
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
@@ -96,14 +137,19 @@ function renderTodoList(todos) {
     const todoList = $("todoList");
     todoList.innerHTML = '';
     todos.forEach((todo, i) => {
+        // Нормалізація полів, що можуть мати різний регістр
+        const id = todo.Id || todo.id;
+        const title = todo.Title || todo.title;
+        const description = todo.Description || todo.description;
         const dateStr = formatDate(todo.CompleteTime || todo.completeTime);
+
         const div = document.createElement('div');
         div.className = 'task';
-        div.setAttribute('data-id', todo.Id || todo.id);
+        div.setAttribute('data-id', id);
         div.innerHTML = `
             <div class="info">
-                <h1>${todo.Title || todo.title}</h1>
-                <p>${todo.Description || todo.description}</p>
+                <h1>${title}</h1>
+                <p>${description}</p>
             </div>
             <div class="date">${dateStr}</div>
             <button class="close-btn">✖</button>
@@ -114,66 +160,78 @@ function renderTodoList(todos) {
     });
 }
 
+// Видалення задачі з анімацією
 function deleteTodoItem(id) {
     const taskDiv = document.querySelector(`.task[data-id="${id}"]`);
     if (taskDiv) {
         taskDiv.classList.remove('task-in');
         taskDiv.classList.add('task-out');
+        // Чекаємо завершення анімації перед видаленням
         setTimeout(() => {
-            fetch(`${API}/${id}`, {
-                method: 'DELETE',
-            })
-            .then(res => {
-                if (!res.ok) throw new Error('Помилка при видаленні задачі');
-                loadTodoList();
-            })
-            .catch(err => alert(err.message));
-        }, 400); // час співпадає з transition
-    } else {
-        // fallback якщо не знайдено div
-        fetch(`${API}/${id}`, {
-            method: 'DELETE',
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Помилка при видаленні задачі');
-            loadTodoList();
-        })
-        .catch(err => alert(err.message));
+            fetch(`${API}/${id}`, { method: 'DELETE' })
+                .then(res => {
+                    if (!res.ok) throw new Error('Помилка при видаленні задачі');
+                    loadTodoList(); // Оновлюємо список після видалення
+                })
+                .catch(err => alert(err.message));
+        }, 400); // Час має співпадати з CSS-анімацією
     }
 }
 
-
+// Обробник для кнопки відправки тексту до AI
 $("sendToAIBtn").onclick = () => {
     const textInput = $("textToAI");
-    if (!textInput) {
-        alert('Поле для введення тексту не знайдено!');
-        return;
-    }
     const text = textInput.value.trim();
     if (text) {
-        const btn = $("sendToAIBtn");
-        btn.disabled = true;
-        const oldContent = btn.innerHTML;
-        btn.innerHTML = '🔄';
-        fetch(`${API}/ai-process`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(text)
-        })
-        .then(res => {
-            if (!res.ok) throw new Error('Помилка при обробці AI');
-            return res.json();
-        })
-        .then(() => {
-            loadTodoList();
-        })
-        .catch(err => alert(err.message))
-        .finally(() => {
-            btn.innerHTML = oldContent;
-            btn.disabled = false;
-            textInput.value = '';
-        });
+        sendToAI(text);
+        textInput.value = ''; // Очищуємо поле після відправки
     } else {
         alert('Будь ласка, введіть текст для AI');
     }
+};
+
+// --- Голосовий ввід ---
+if (window.hasOwnProperty('webkitSpeechRecognition')) {
+    const recordBtn = $('recordBtn');
+    let recognition = null;
+    let isRecording = false;
+
+    recordBtn.onclick = () => {
+        if (isRecording) {
+            recognition.stop();
+            return;
+        }
+        
+        recognition = new webkitSpeechRecognition();
+        recognition.lang = 'uk-UA';
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+
+        recognition.onstart = () => {
+            isRecording = true;
+            recordBtn.innerHTML = '⏹️';
+        };
+
+        recognition.onresult = (event) => {
+            toggleModal('record', false); // Ховаємо вікно запису
+            const text = event.results[0][0].transcript;
+            console.log('Розпізнаний текст:', text);
+            sendToAI(text); // Відправляємо розпізнаний текст
+        };
+
+        recognition.onerror = (event) => {
+            alert('Помилка розпізнавання: ' + event.error);
+        };
+
+        recognition.onend = () => {
+            isRecording = false;
+            recordBtn.innerHTML = '🎤';
+        };
+
+        recognition.start();
+    };
+} else {
+    // Якщо функція не підтримується, ховаємо кнопку
+    console.log('Розпізнавання мовлення не підтримується у вашому браузері.');
+    if ($('searchBarBtn')) $('searchBarBtn').style.display = 'none';
 }

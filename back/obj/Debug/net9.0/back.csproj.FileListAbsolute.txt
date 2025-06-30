@@ -37,3 +37,4 @@ g:\Projects\IT\c#Projects\TO DO LIST APP\back\obj\Debug\net9.0\refint\back.dll
 g:\Projects\IT\c#Projects\TO DO LIST APP\back\obj\Debug\net9.0\back.pdb
 G:\Projects\IT\c#Projects\TO DO LIST APP\back\obj\Debug\net9.0\back.genruntimeconfig.cache
 G:\Projects\IT\c#Projects\TO DO LIST APP\back\obj\Debug\net9.0\ref\back.dll
+G:\Projects\IT\c#Projects\TO DO LIST APP\back\obj\Debug\net9.0\back.sourcelink.json
