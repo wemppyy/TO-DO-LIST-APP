@@ -6,11 +6,8 @@ const API = "http://localhost:5800/todo";
 // Час анімації в мс, має відповідати CSS
 const ANIMATION_TIME = 500;
 
-/**
- * Універсальна функція для показу/приховування модальних вікон з анімацією.
- * @param {string} modalId - ID модального вікна.
- * @param {boolean} show - true, щоб показати, false, щоб приховати.
- */
+
+// Універсальна функція для показу/приховування модальних вікон з анімацією.
 function toggleModal(modalId, show) {
     const modal = $(modalId);
     if (!modal) return;
@@ -28,10 +25,8 @@ function toggleModal(modalId, show) {
     }
 }
 
-/**
- * Відправляє текст до AI для обробки та оновлює список задач.
- * @param {string} text - Текст для відправки.
- */
+// Відправляє текст до AI для обробки та оновлює список задач.
+
 async function sendToAI(text) {
     const btn = $("sendToAIBtn");
     const oldContent = btn.innerHTML;
@@ -46,7 +41,7 @@ async function sendToAI(text) {
         });
         if (!res.ok) throw new Error('Помилка під час обробки AI');
         await res.json(); // Очікуємо відповідь, навіть якщо вона порожня
-        loadTodoList(); // Оновлюємо список
+        loadTodoList();
     } catch (err) {
         alert(err.message);
     } finally {
@@ -90,7 +85,7 @@ $("submitButton").onclick = async e => {
         $("task-date").value = '';
         toggleModal("addItem", false);
         
-        loadTodoList(); // Оновлюємо список задач
+        loadTodoList();
     } catch (err) {
         alert('Помилка при додаванні задачі: ' + err.message);
     }
@@ -171,7 +166,7 @@ function deleteTodoItem(id) {
             fetch(`${API}/${id}`, { method: 'DELETE' })
                 .then(res => {
                     if (!res.ok) throw new Error('Помилка при видаленні задачі');
-                    loadTodoList(); // Оновлюємо список після видалення
+                    loadTodoList();
                 })
                 .catch(err => alert(err.message));
         }, 400); // Час має співпадати з CSS-анімацією
@@ -184,7 +179,7 @@ $("sendToAIBtn").onclick = () => {
     const text = textInput.value.trim();
     if (text) {
         sendToAI(text);
-        textInput.value = ''; // Очищуємо поле після відправки
+        textInput.value = '';
     } else {
         alert('Будь ласка, введіть текст для AI');
     }
@@ -213,10 +208,10 @@ if (window.hasOwnProperty('webkitSpeechRecognition')) {
         };
 
         recognition.onresult = (event) => {
-            toggleModal('record', false); // Ховаємо вікно запису
+            toggleModal('record', false);
             const text = event.results[0][0].transcript;
             console.log('Розпізнаний текст:', text);
-            sendToAI(text); // Відправляємо розпізнаний текст
+            sendToAI(text);
         };
 
         recognition.onerror = (event) => {
